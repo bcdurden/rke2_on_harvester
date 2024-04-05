@@ -1,0 +1,49 @@
+cluster_name: mycluster
+cluster_namespace: default
+
+shared_token: insecuretoken
+system_default_registry: ""       #! empty value: use embedded default
+                                  #! non-empty value: use as regsitry to source rke2 runtime image from
+                                  #! if your VM image contains the tarballs for RKE2, it will use those first
+rke2_version: v1.26.10+rke2r2
+
+ssh_pub_key: ""                   #! the public ssh key to inject onto each node, required if you want to fetch a kubeconfig
+
+vm:
+  image_namespace: default        #! namespace in your harvester cluster containing the vm base image
+  image: ubuntu                   #! name of base vm image to use for your RKE2 nodes
+  os: linux
+  distro: ubuntu                  #! flag used for specific cloud-init code tied to Ubuntu vs others (netplan)
+  uefi_enabled: true
+  qemu_agent_install: true        #! flag for installation of the qemu-agent service (Requires internet)
+  qemu_agent_enable: true         #! flag for enabling the qemu-agent
+  airgapped_image: false          #! flag to alert helm that your VM image already has the RKE2 install script (and does not need to download it)
+
+network_name: host
+
+control_plane:
+  node_count: 1
+  cpu_count: 4
+  memory_gb: 8
+  node_disk_gb: 40
+
+  vip:                            #! this is the VIP for the Harvester LoadBalancer object, ensure it is a routable IP
+  ipam: dhcp                      #! this can be dhcp or static, static requires the static ip fields
+  static_ip:
+    device: enp1s0                #! network device name on your VMs, may differ depending on host OS
+    gateway: 10.10.0.1
+    dns:
+    - 10.10.0.1
+    pool:                         #! this is an available IP pool to be used for control-plane nodes when they are deployed, they are deterministic
+    - 10.10.0.6/24
+    - 10.10.0.7/24
+    - 10.10.0.8/24
+
+worker:
+  node_count: 1
+  cpu_count: 4
+  memory_gb: 8
+  node_disk_gb: 40
+
+  ipam: dhcp
+  static_ip_pool: {}

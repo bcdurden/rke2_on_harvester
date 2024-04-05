@@ -1,0 +1,10 @@
+apiVersion: v2
+name: rke2-cluster
+description: RKE2 cluster designed for usage directly on Harvester
+icon: https://raw.githubusercontent.com/rancherfederal/carbide-docs/main/static/img/carbide-logo.svg
+type: application
+version: 0.0.1
+appVersion: 0.0.1
+annotations:
+  catalog.cattle.io/type: cluster-template
+  catalog.cattle.io/namespace: fleet-default

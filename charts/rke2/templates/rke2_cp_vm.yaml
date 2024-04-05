@@ -1,0 +1,75 @@
+{{- range $i := until (.Values.control_plane.node_count | int) }}
+---
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  namespace: {{ $.Values.cluster_namespace }}
+  annotations:
+    harvesterhci.io/volumeClaimTemplates: |
+      [{"metadata":{"name":"{{ $.Values.cluster_name }}-cp-disk-{{ $i }}","annotations":{"harvesterhci.io/imageId":"{{ $.Values.vm.image_namespace }}/{{ $.Values.vm.image }}","helm.app":"rke2"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"{{ $.Values.control_plane.node_disk_gb }}Gi"}},"volumeMode":"Block","storageClassName":"longhorn-{{ $.Values.vm.image }}"}}]
+    network.harvesterhci.io/ips: '[]'
+  labels:
+    harvesterhci.io/creator: harvester
+    harvesterhci.io/os: {{ $.Values.vm.os }}
+  name: {{ $.Values.cluster_name }}-cp-{{ $i }}
+  finalizers:
+    - harvesterhci.io/VMController.UnsetOwnerOfPVCs
+spec:
+  runStrategy: RerunOnFailure
+  template:
+    metadata:
+      annotations: {}
+      labels:
+        harvesterhci.io/vmName: {{ $.Values.cluster_name }}-cp-{{ $i }}
+    spec:
+      domain:
+        machine:
+          type: ''
+        cpu:
+          cores: {{ $.Values.control_plane.cpu_count }}
+          sockets: 1
+          threads: 1
+        devices:
+          interfaces:
+            - bridge: {}
+              model: virtio
+              name: default
+          disks:
+            - name: disk-0
+              disk:
+                bus: virtio
+              bootOrder: 1
+            - name: cloudinitdisk
+              disk:
+                bus: virtio
+          hostDevices: []
+        resources:
+          limits:
+            memory: {{ $.Values.control_plane.memory_gb }}Gi
+            cpu: {{ $.Values.control_plane.cpu_count }}
+        features:
+          acpi:
+            enabled: {{ $.Values.vm.uefi_enabled }}
+        firmware:
+          bootloader:
+            efi:
+              secureBoot: false
+      evictionStrategy: LiveMigrate
+      hostname: {{ $.Values.cluster_name }}-cp-{{ $i }}
+      networks:
+        - name: default
+          multus:
+            networkName: default/{{ $.Values.network_name }}
+      volumes:
+        - name: disk-0
+          persistentVolumeClaim:
+            claimName: {{ $.Values.cluster_name }}-cp-disk-{{ $i }}
+        - name: cloudinitdisk
+          cloudInitNoCloud:
+            secretRef:
+              name: {{ $.Values.cluster_name }}-cp-{{ $i }}-cloudinit
+            networkDataSecretRef:
+              name: {{ $.Values.cluster_name }}-cp-{{ $i }}-cloudinit
+      affinity: {}
+      terminationGracePeriodSeconds: 120
+{{- end }}
