@@ -1,0 +1,80 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  namespace: default
+  annotations:
+    harvesterhci.io/volumeClaimTemplates: >-
+      [{"metadata":{"name":"builder-disk","annotations":{"harvesterhci.io/imageId":"${VM_NAMESPACE}/${VM_IMAGE}"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"${BUILDER_DISK_SIZE_GB}Gi"}},"volumeMode":"Block","storageClassName":"longhorn-${VM_IMAGE}"}}]
+    network.harvesterhci.io/ips: '[]'
+  labels:
+    harvesterhci.io/creator: harvester
+    harvesterhci.io/os: ubuntu
+  name: builder
+  finalizers:
+    - harvesterhci.io/VMController.UnsetOwnerOfPVCs
+spec:
+  runStrategy: RerunOnFailure
+  template:
+    metadata:
+      annotations: {}
+      labels:
+        harvesterhci.io/vmName: builder
+    spec:
+      domain:
+        machine:
+          type: ''
+        cpu:
+          cores: 4
+          model: host-passthrough
+          sockets: 1
+          threads: 1
+        devices:
+          interfaces:
+            - bridge: {}
+              model: virtio
+              name: default
+          disks:
+            - name: disk-0
+              disk:
+                bus: virtio
+              bootOrder: 1
+            - name: cloudinitdisk
+              disk:
+                bus: virtio
+            - name: packerdisk
+              disk:
+                bus: virtio
+          hostDevices: []
+        resources:
+          limits:
+            memory: 8Gi
+            cpu: '4'
+        features:
+          acpi:
+            enabled: true
+        firmware:
+          bootloader:
+            efi:
+              secureBoot: false
+      evictionStrategy: LiveMigrate
+      hostname: builder
+      networks:
+        - name: default
+          multus:
+            networkName: default/host
+        # - name: default
+        #   pod: {}
+      volumes:
+        - name: disk-0
+          persistentVolumeClaim:
+            claimName: builder-disk
+        - name: cloudinitdisk
+          cloudInitNoCloud:
+            secretRef:
+              name: builder-cloudinit
+            networkData: ""
+        - name: packerdisk
+          secret:
+            secretName: packer-disk
+      affinity: {}
+      terminationGracePeriodSeconds: 60

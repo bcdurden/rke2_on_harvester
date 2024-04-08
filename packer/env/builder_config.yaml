@@ -1,0 +1,38 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: builder-cloudinit
+  namespace: default
+stringData:
+  userdata: |
+    #cloud-config
+    package_update: true
+    packages:
+      - qemu-guest-agent
+      - qemu
+      - qemu-system-x86 
+      - curl
+      - wget
+      - genisoimage        
+    runcmd:
+    - - systemctl
+      - enable
+      - '--now'
+      - qemu-guest-agent.service
+    - usermod -G kvm ubuntu
+    - snap install kubectl --classic
+    - curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
+    - apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+    - apt-get update && apt-get install packer
+    - wget https://github.com/mikefarah/yq/releases/download/v4.30.1/yq_linux_amd64
+    - sudo install yq_linux_amd64 /usr/local/bin/yq
+    - rm yq_linux_amd64
+    - mkdir /mnt/builder
+    - mount /dev/vdc /mnt/builder
+    - tar xvf /mnt/builder/builder.tgz -C /home/ubuntu
+    - chown -R ubuntu:ubuntu /home/ubuntu/builder
+    - su - ubuntu -c "PACKER_LOG=1 packer init  /home/ubuntu/builder/. &> /home/ubuntu/builder/init.log"
+    - su - ubuntu -c "PACKER_LOG=1 packer build -var "recipe_file=/home/ubuntu/builder/recipe.yaml" -var "image_name=${OUTPUT_VM_NAME}" /home/ubuntu/builder/. &> /home/ubuntu/builder/builder.log"
+    ssh_authorized_keys: 
+    - ${SSH_KEY}
