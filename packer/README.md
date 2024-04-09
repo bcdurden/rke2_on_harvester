@@ -3,17 +3,13 @@ Use Harvester to run a qemu instance to build a custom VM.
 
 ## Future Updates
 * Auto download base VMI
-* Auto create/delete ssh keys
+* Migrate packer instance into virt-launcher container without VM
 
-Ensure your kubecontext is pointed at your Harvester cluster. Edit the [build.sh](./build.sh) script to ensure the parameters are correct and to your liking. The most important values are your SSH keys and the VM_IMAGE value.
+Ensure your kubecontext is pointed at your Harvester cluster. Edit the [build.sh](./build.sh) script to ensure the parameters are correct and to your liking. The most important value is the VM_IMAGE value.
 ```bash
 # variables consumed by envsubst
 export VM_NAMESPACE=default
 export VM_IMAGE=ubuntu
-export BUILDER_DISK_SIZE_GB=40
-export SSH_KEY=$(cat ~/.ssh/fulcrum.pub)
-export SSH_PRIVATE_KEY="~/.ssh/fulcrum"
-export OUTPUT_VM_NAME=ubuntu-jammy-rke2
 ```
 
 Edit your [recipe.yaml](./recipe.yaml) file to suit your custom VM image (its a cloud-init). Passwords and such do not persist.
@@ -40,8 +36,25 @@ runcmd:
 
 
 Packaging Builder environment
+Generating public/private rsa key pair.
+Your identification has been saved in /home/deathstar/rke2_on_harvester/packer/my_key
+Your public key has been saved in /home/deathstar/rke2_on_harvester/packer/my_key.pub
+The key fingerprint is:
+SHA256:Evp/V+G9IUQ12PZ/0c+C/E0uG+YJujFYmJ8JDmQdFDk deathstar@deathstar-F7BSC
+The key's randomart image is:
++---[RSA 3072]----+
+|       .+o    +o |
+|       .E.   o o.|
+|      + ..  . . o|
+|     + . o   ...o|
+|    . o S ...o ++|
+|     . + = oo.+.B|
+|      . o * .o+=+|
+|       .  .+.+o+o|
+|        ..oo  +o |
++----[SHA256]-----+
 secret/builder-cloudinit created
-secret/packer-disk configured
+secret/packer-disk created
 virtualmachine.kubevirt.io/builder created
 Waiting for Builder VM to start
 Error from server (NotFound): virtualmachineinstances.kubevirt.io "builder" not found
@@ -59,17 +72,14 @@ Error from server (NotFound): virtualmachineinstances.kubevirt.io "builder" not 
 .
 .
 .
-.
-.
-.
 Waiting for Builder VM to finish
 Warning: Permanently added '10.10.0.63' (ED25519) to the list of known hosts.
-.....................................................Warning: Permanently added '10.10.0.63' (ED25519) to the list of known hosts.
-ubuntu-jammy-rke2-amd64.img                                                                                         100%  755MB 276.3MB/s   00:02    
+.................................................Warning: Permanently added '10.10.0.63' (ED25519) to the list of known hosts.
+ubuntu-jammy-rke2-amd64.img                                                                                         100%  720MB 279.5MB/s   00:02    
 Warning: Permanently added '10.10.0.63' (ED25519) to the list of known hosts.
-init.log                                                                                                            100% 3947     4.7MB/s   00:00    
+init.log                                                                                                            100% 3947     2.9MB/s   00:00    
 Warning: Permanently added '10.10.0.63' (ED25519) to the list of known hosts.
-builder.log                                                                                                         100%   57KB  12.6MB/s   00:00    
+builder.log                                                                                                         100%   56KB  23.7MB/s   00:00    
 Image located here: ubuntu-jammy-rke2-amd64.img
 virtualmachine.kubevirt.io "builder" deleted
 secret "builder-cloudinit" deleted
