@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations: {}
+  labels:
+    harvesterhci.io/vmName: builder
+    vm.kubevirt.io/name: builder
+  name: builder-pod
+  namespace: default
+  
+spec:
+  initContainers:
+    - command: ["bash", "-c"]
+      args:
+      - |
+        zypper -n install unzip mkisofs; 
+        curl -sO https://releases.hashicorp.com/packer/1.10.2/packer_1.10.2_linux_amd64.zip --output-dir /root;
+        unzip /root/packer_1.10.2_linux_amd64.zip -d /root;
+        install /root/packer /usr/local/bin/packer;
+        tar xvf /var/run/kubevirt-private/secret/packerdisk/builder.tgz -C /root;
+        cd /root && packer init builder/.;
+        cd /root && packer build -var "recipe_file=/root/builder/recipe.yaml" builder/.;
+        cp /root/output/*.img /results
+      env:
+        - name: KUBEVIRT_RESOURCE_NAME_default
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+      image: registry.suse.com/suse/sles/15.4/virt-launcher:0.54.0-150400.3.19.1
+      imagePullPolicy: IfNotPresent
+      name: build
+      resources:
+        limits:
+          cpu: '4'
+          devices.kubevirt.io/kvm: '1'
+          devices.kubevirt.io/tun: '1'
+          devices.kubevirt.io/vhost-net: '1'
+          memory: 8641194Ki
+        requests:
+          cpu: 250m
+          devices.kubevirt.io/kvm: '1'
+          devices.kubevirt.io/tun: '1'
+          devices.kubevirt.io/vhost-net: '1'
+          ephemeral-storage: 50M
+          memory: 5844650Ki
+      securityContext:
+        capabilities:
+          add:
+            - NET_BIND_SERVICE
+            - SYS_PTRACE
+            - SYS_NICE
+          drop:
+            - NET_RAW
+        privileged: false
+        runAsNonRoot: false
+        runAsUser: 0
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+        - mountPath: /var/run/kubevirt-private
+          name: private
+        - mountPath: /var/run/kubevirt
+          name: public
+        - mountPath: /results
+          name: results
+        - mountPath: /var/run/libvirt
+          name: libvirt-runtime
+        - mountPath: /var/run/kubevirt/sockets
+          name: sockets
+        - mountPath: /var/run/kubevirt-private/secret/packerdisk
+          name: packerdisk
+          readOnly: true
+  containers:    
+    - name: keepalive
+      image: busybox
+      command: ["/bin/sh", "-c", "sleep 60"]
+      volumeMounts:
+      - name: results
+        mountPath: /results
+  hostname: builder
+  nodeName: fulcrum1
+  nodeSelector:
+    kubevirt.io/schedulable: 'true'
+  restartPolicy: Never
+  schedulerName: default-scheduler
+  securityContext:
+    runAsUser: 0
+    seLinuxOptions:
+      type: virt_launcher.process
+  serviceAccount: default
+  serviceAccountName: default
+  volumes:
+    - emptyDir: {}
+      name: private
+    - emptyDir: {}
+      name: public
+    - emptyDir: {}
+      name: sockets
+    - name: packerdisk
+      secret:
+        defaultMode: 420
+        secretName: packer-disk
+    - emptyDir: {}
+      name: virt-bin-share-dir
+    - emptyDir: {}
+      name: libvirt-runtime
+    - emptyDir: {}
+      name: results

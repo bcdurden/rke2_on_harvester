@@ -14,6 +14,6 @@ build {
   sources = ["source.file.user_data", "source.file.meta_data"]
 
   provisioner "shell-local" {
-    inline = ["genisoimage -output cidata.iso -input-charset utf-8 -volid cidata -joliet -r user-data meta-data"]
+    inline = ["mkisofs -output cidata.iso -input-charset utf-8 -volid cidata -joliet -r user-data meta-data"]
   }
 }
