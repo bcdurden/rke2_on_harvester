@@ -7,7 +7,7 @@ This helmchart will start as a simple PoC for deploying an RKE2 cluster onto Har
 * kubectl
 * helm
 * Harvester cluster
-* VM image preloaded in Harvester
+* VM image preloaded in Harvester ([click here](packer/README.md) to view how to build this image)
 * yq
 
 
@@ -62,7 +62,3 @@ mycluster-cp-0   Ready    control-plane,etcd,master   5m36s   v1.26.10+rke2r2
 mycluster-cp-1   Ready    control-plane,etcd,master   4m28s   v1.26.10+rke2r2
 mycluster-cp-2   Ready    control-plane,etcd,master   4m11s   v1.26.10+rke2r2
 ```
-
-## Upcoming Features
-
-Packer builder for VM image.
