@@ -134,7 +134,7 @@ mycluster-cp-2   Ready    control-plane,etcd,master   4m11s   v1.26.10+rke2r2
 ```
 
 ## Parting Thoughts
-Congrats, you've installed an RKE2 cluster!!! 
+Congrats, you've installed an RKE2 cluster, and you did it using K8S-native code! This unified approach to managing Kubernetes infrastructure is a major industry trend over the last few years and I think we can see how Harvester ties into this conversation natively without requiring things like CAPI. Harvester treats VMs just like containers: Their definition uses the same API and language as normal K8S objects.
 
 In the example above, we created a cluster designed to function as an HA-Rancher MCM management cluster (3 control-plane/worker hybrids). However, the helm chart is flexible enough that we can deploy any kind of cluster arrangement we want (1 control plane and 3 workers, for instance). From here we can install Rancher MCM onto this cluster and begin managing Harvester directly from Rancher! 
 
