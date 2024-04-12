@@ -16,7 +16,7 @@ kubectl apply -f builder.yaml
 sleep 5
 kubectl logs builder-pod  -c build -f
 
-until [[ $(kubectl get po builder-pod -o yaml | yq .status.phase) == "Running" ]]; do sleep 1; done
+until [[ $(kubectl get po builder-pod -o=go-template='{{.status.phase}}') == "Running" ]]; do sleep 1; done
 kubectl cp builder-pod:results/${VM_FILENAME} ${VM_FILENAME}
 kubectl delete -f builder.yaml
 

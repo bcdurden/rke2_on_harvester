@@ -1,0 +1,18 @@
+apiVersion: harvesterhci.io/v1beta1
+kind: VirtualMachineImage
+metadata:
+  name: ${IMAGE_NAME}
+  annotations:
+    harvesterhci.io/storageClassName: harvester-longhorn
+  labels:
+    harvesterhci.io/image-type: raw_qcow2
+    harvesterhci.io/os-type: linux
+  namespace: ${NAMESPACE}
+spec:
+  displayName: ${IMAGE_NAME}
+  retry: 3
+  sourceType: upload
+  storageClassParameters:
+    migratable: 'true'
+    numberOfReplicas: '3'
+    staleReplicaTimeout: '30'

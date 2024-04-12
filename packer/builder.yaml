@@ -13,6 +13,7 @@ spec:
     - command: ["bash", "-c"]
       args:
       - |
+        zypper update;
         zypper -n install unzip mkisofs; 
         curl -sO https://releases.hashicorp.com/packer/1.10.2/packer_1.10.2_linux_amd64.zip --output-dir /root;
         unzip /root/packer_1.10.2_linux_amd64.zip -d /root;
